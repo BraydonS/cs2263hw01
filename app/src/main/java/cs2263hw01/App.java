@@ -129,7 +129,6 @@ public class App extends Application{
                 newCourse.ifPresent(course -> {
                    final Course c = course;
                    courseList.add(c);
-                   System.out.println(c.toString());
                 });
 
             }
@@ -153,8 +152,6 @@ public class App extends Application{
             Iterator i = courseList.iterator();
             while(i.hasNext()){
                 final Course c = (Course) i.next();
-                System.out.println(c.getDepartment());
-                System.out.println(comboValue);
                 if(c.getDepartment() == comboValue){
                     courseListView.getItems().add(c.toString());
                 }
