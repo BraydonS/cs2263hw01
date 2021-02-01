@@ -7,23 +7,166 @@ import java.io.IOException;
 import java.util.*;
 
 import javafx.application.Application;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Button;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.text.Text;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.geometry.Pos;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
-import java.util.Vector;
+import javafx.util.Callback;
+
+import java.net.URL;
+import java.util.Map;
 
 public class App extends Application{
+
+
+
+
+
     @Override
     public void start(Stage primaryStage) throws Exception {
+        primaryStage.setTitle("Course Manager");
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getClassLoader().getResource("scenedesign.fxml"));
+        Pane pane = loader.<Pane>load();
+        Course accessCourse = new Course();
+        Map<String, String> courseMap = accessCourse.getDepartments();
+        Vector<Course> courseList = new Vector<Course>();
+        ScrollPane courseListScroll = new ScrollPane();
+        courseListScroll.prefWidth(512);
+        ListView<String> courseListView = new ListView<String>();
+        courseListView.prefWidth(499);
+        courseListScroll.setContent(courseListView);
+        VBox primaryBox = new VBox(pane,courseListScroll);
+        primaryBox.prefWidth(512);
+        Scene scene = new Scene(primaryBox);
+
+
+
+
+
+        ComboBox courseComboBox = (ComboBox) scene.lookup("#courseComboBox");
+        Button addCourseButton = (Button) scene.lookup("#addCourseButton");
+        Button displayDeptButton = (Button) scene.lookup("#displayDeptButton");
+        Button displayAllButton = (Button) scene.lookup("#displayAllButton");
+
+
+
+
+        Dialog addCourseDialog = new Dialog<>();
+        addCourseDialog.setTitle("Add Course");
+        GridPane courseDialogGrid = new GridPane();
+        Label dialogNameLabel = new Label("Course Name: ");
+        Label dialogNumLabel = new Label("Course Number: ");
+        Label dialogCreditsLabel = new Label("Credits: ");
+        TextField courseDialogName = new TextField();
+        TextField courseDialogNum = new TextField();
+        TextField courseDialogCredits = new TextField();
+        courseDialogGrid.add(dialogNameLabel,1,1);
+        courseDialogGrid.add(dialogNumLabel,1,2);
+        courseDialogGrid.add(dialogCreditsLabel,1,3);
+        courseDialogGrid.add(courseDialogName,2,1);
+        courseDialogGrid.add(courseDialogNum,2,2);
+        courseDialogGrid.add(courseDialogCredits,2,3);
+        addCourseDialog.getDialogPane().setContent(courseDialogGrid);
+        ButtonType enterButtonType = new ButtonType("Enter", ButtonBar.ButtonData.OK_DONE);
+        addCourseDialog.getDialogPane().getButtonTypes().add(enterButtonType);
+        Alert dialogFail = new Alert(Alert.AlertType.ERROR);
+        dialogFail.setTitle("Invalid Input");
+        dialogFail.setHeaderText("Invalid Input");
+        dialogFail.setContentText("Empty Field or Course Number/Credits couldn't be Parsed to Number");
+
+        addCourseDialog.setResultConverter(new Callback<ButtonType, Course>() {
+            @Override
+            public Course call(ButtonType b) {
+                if (b == enterButtonType){
+                    int numTest;
+                    try {
+                        numTest = Integer.parseInt(courseDialogNum.getText());
+                    }
+                    catch (NumberFormatException e){
+                        dialogFail.showAndWait();
+                        return null;
+                    }
+                    int creditTest;
+                    try {
+                        creditTest = Integer.parseInt(courseDialogCredits.getText());
+                    }
+                    catch (NumberFormatException e){
+                        dialogFail.showAndWait();
+                        return null;
+                    }
+
+                    if(courseDialogName.getText() != "" | courseDialogNum.getText() != "" | courseDialogCredits.getText() != ""){
+                        return new Course(numTest,courseDialogName.getText(),creditTest, courseComboBox.getValue().toString());
+                    }
+                    else{
+                        dialogFail.showAndWait();
+                        return null;
+                    }
+                }
+                return null;
+            }
+        });
+
+
+
+        for (Map.Entry<String, String> entry : courseMap.entrySet()){
+            courseComboBox.getItems().add(entry.getKey());
+        }
+
+        addCourseButton.setOnAction(actionEvent -> {
+            final String comboValue = (String) courseComboBox.getValue();
+            if(comboValue != ""){
+                addCourseDialog.setHeaderText("Add " + courseMap.get(comboValue) + " Course");
+                Optional<Course> newCourse = addCourseDialog.showAndWait();
+                newCourse.ifPresent(course -> {
+                   final Course c = course;
+                   courseList.add(c);
+                   System.out.println(c.toString());
+                });
+
+            }
+        });
+
+
+
+
+        displayAllButton.setOnAction(actionEvent -> {
+            courseListView.getItems().clear();
+            Iterator i = courseList.iterator();
+            while(i.hasNext()){
+                String next = i.next().toString();
+                courseListView.getItems().add(next);
+            }
+        });
+
+        displayDeptButton.setOnAction(actionEvent -> {
+            final String comboValue = (String) courseComboBox.getValue();
+            courseListView.getItems().clear();
+            Iterator i = courseList.iterator();
+            while(i.hasNext()){
+                final Course c = (Course) i.next();
+                System.out.println(c.getDepartment());
+                System.out.println(comboValue);
+                if(c.getDepartment() == comboValue){
+                    courseListView.getItems().add(c.toString());
+                }
+
+            }
+        });
+
+
+
+
+        primaryStage.setScene(scene);
+        primaryStage.show();
 
     }
 
